@@ -38,6 +38,13 @@ var (
 	errNoLastInsertID  = errors.New("no LastInsertId available after the empty statement")
 )
 
+type SessionResetFunc func(ctx context.Context, conn driver.Conn) error
+
+var sessionResetFunc SessionResetFunc
+
+func RegisterSessionResetFunc(cb SessionResetFunc){
+	sessionResetFunc = cb
+}
 // Driver is the Postgres database driver.
 type Driver struct{}
 
@@ -158,6 +165,12 @@ type conn struct {
 
 	// GSSAPI context
 	gss GSS
+}
+func (cn *conn) ResetSession(ctx context.Context) error{
+	if nil != sessionResetFunc {
+		return sessionResetFunc(ctx,cn)
+	}
+	return nil
 }
 
 // Handle driver-side settings in parsed connection string.
@@ -371,6 +384,7 @@ func dial(ctx context.Context, d Dialer, o values) (net.Conn, error) {
 	}
 	return d.Dial(network, address)
 }
+
 
 func network(o values) (string, string) {
 	host := o["host"]
