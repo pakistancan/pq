@@ -38,7 +38,7 @@ var (
 	errNoLastInsertID  = errors.New("no LastInsertId available after the empty statement")
 )
 
-type SessionResetFunc func(ctx context.Context, conn driver.Conn) error
+type SessionResetFunc func(ctx context.Context, conn driver.Conn, vals map[string]string) error
 
 var sessionResetFunc SessionResetFunc
 
@@ -168,7 +168,7 @@ type conn struct {
 }
 func (cn *conn) ResetSession(ctx context.Context) error{
 	if nil != sessionResetFunc {
-		return sessionResetFunc(ctx,cn)
+		return sessionResetFunc(ctx,cn,cn.opts)
 	}
 	return nil
 }
